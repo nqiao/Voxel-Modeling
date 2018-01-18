@@ -267,7 +267,7 @@ def inner_diff(u, v):
 
 
 def main():
-    N_2 = 5
+    N_2 = 11
     # Problem 2
     print("Problem 2")
     print("2.1")
@@ -291,7 +291,7 @@ def main():
     # print("norm: ", nu_norm(u))
 
     # Problem 5
-    N_5 = 1000000
+    N_5 = 100000000
     print("Problem 5")
     v = np.ones(N_5)
     u = np.ones(N_5)
@@ -309,7 +309,7 @@ def main():
     print("u dot v = ", nu_inner(u, v))
     print("5.5")
     # print("u reverse dot v = ")
-    inner_diff(u, v)
+    print("Dot result difference: ", inner_diff(u, v))
 
     plot_res(N_2)
 
