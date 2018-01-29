@@ -55,7 +55,7 @@ def sum_reduce(x, y):
 
 
 @cuda.jit
-def normKernel(d_f, p):
+def norm_kernel(d_f, p):
     i, j = cuda.grid(2)
     nx, ny = d_f.shape
     if i < nx and j < ny:
@@ -73,7 +73,7 @@ def lp_norm(p):
     d_f = cuda.to_device(f)
     gridDims = ((N + TPBX - 1) // TPBX, (N + TPBY - 1) // TPBY)
     blockDims = (TPBX, TPBY)
-    normKernel[gridDims, blockDims](d_f, p)
+    norm_kernel[gridDims, blockDims](d_f, p)
     f = d_f.copy_to_host()
     print(f.shape)
     f_1 = f.flatten()
@@ -93,6 +93,47 @@ def serial_norm(p):
         for j in range(256):
             sum += f[i][j] ** p
     return math.pow(sum, 1/p)
+
+
+# Problem 6
+DELTA_T = 0.01
+EPOCH = 1000
+@cuda.jit
+def ode_kernel_c(d_x, d_v):
+    i, j = cuda.grid(2)
+    nx, ny = d_x.shape
+    if i < nx and j < ny:
+        for e in range(EPOCH):
+            d_x[i] = d_x[i] + d_v[i] * DELTA_T
+            d_v[i] = d_v[i] - d_x[i] * DELTA_T
+
+@cuda.jit
+def ode_kernel_d(d_x, d_v):
+    i, j = cuda.grid(2)
+    nx, ny = d_x.shape
+    if i < nx and j < ny:
+        for e in range(EPOCH):
+            d_x[i] = d_x[i] + d_v[i] * DELTA_T
+            d_v[i] = d_v[i] - (d_x[i] + 0.1 * d_v[i]) * DELTA_T
+
+
+@cuda.jit
+def ode_kernel_e(d_x, d_v):
+    i, j = cuda.grid(2)
+    nx, ny = d_x.shape
+    if i < nx and j < ny:
+        for e in range(EPOCH):
+            d_x[i] = d_x[i] + d_v[i] * DELTA_T
+            d_v[i] = d_v[i] + (-d_x[i] + 0.1 * (1 - d_x[i] **2 ) * d_v[i]) * DELTA_T
+
+
+def ode_solver():
+    x = np.linspace(-3, 3, 60)
+    print(x)
+
+
+
+
 
 def main():
     # # Problem 2
@@ -114,12 +155,16 @@ def main():
     # # print(f_p)
     
 
-    # Problem 5
-    p = 2
-    print("norm, p = ", p)
-    print(lp_norm(p))
-    print("serial norm, p = ", p)
-    print(serial_norm(p))
+    # # Problem 5
+    # p = 2
+    # print("norm, p = ", p)
+    # print(lp_norm(p))
+    # print("serial norm, p = ", p)
+    # print(serial_norm(p))
+
+
+    # Problem 6
+    ode_solver()
 
 if __name__ == '__main__':
     main()
