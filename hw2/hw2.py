@@ -101,51 +101,54 @@ DELTA_T = 0.01
 EPOCH = 1000
 @cuda.jit
 def ode_kernel_c(d_f):
-    i, j = cuda.grid(2)
-    nx = d_f.shape[0]
-    ny = d_f.shape[1]
-    if i < nx and j < ny:
-        for e in range(EPOCH):
-            x = d_f[i][j][0]
-            v = d_f[i][j][1]
-            d_f[i][j][0] = x + v * DELTA_T
-            d_f[i][j][1] = v - x * DELTA_T
-
-@cuda.jit
-def ode_kernel_d(d_x, d_v):
     i = cuda.grid(1)
-    n = d_x.shape[0]
+    n = d_f.shape[0]
     if i < n:
         for e in range(EPOCH):
-            d_x[i] = d_x[i] + d_v[i] * DELTA_T
-            d_v[i] = d_v[i] - (d_x[i] + 0.1 * d_v[i]) * DELTA_T
+            x = d_f[i][0]
+            v = d_f[i][1]
+            d_f[i][0] = x + v * DELTA_T
+            d_f[i][1] = v - x * DELTA_T
+
+@cuda.jit
+def ode_kernel_d(d_f):
+    i = cuda.grid(1)
+    n = d_f.shape[0]
+    if i < n:
+        for e in range(EPOCH):
+            x = d_f[i][0]
+            v = d_f[i][1]
+            d_f[i][0] = x + v * DELTA_T
+            d_f[i][1] = v - (x + 0.1 * v) * DELTA_T
 
 
 @cuda.jit
-def ode_kernel_e(d_x, d_v):
+def ode_kernel_e(d_f):
     i = cuda.grid(1)
-    n = d_x.shape[0]
+    n = d_f.shape[0]
     if i < n:
         for e in range(EPOCH):
-            d_x[i] = d_x[i] + d_v[i] * DELTA_T
-            d_v[i] = d_v[i] + (-d_x[i] + 0.1 * (1 - d_x[i] **2 ) * d_v[i]) * DELTA_T
+            x = d_f[i][0]
+            v = d_f[i][1]
+            d_f[i][0] = x + v * DELTA_T
+            d_f[i][1] = v + (-x + 0.1 * (1 - x **2 ) * v) * DELTA_T
 
 
-def ode_solver(grid_size):
-    interval = 0.1
-    N = int(6 / interval) + 1                       # interval = 0.1
-    x = np.linspace(-3, 3, N)
-    v = np.linspace(-3, 3, N)
-    f = np.empty(N * N * 2).reshape((N, N, 2))
+def ode_solver(func):
+    function = func
+    N = 100
+    scale = np.linspace(0, 1, N)
+    f = np.empty(N * 2).reshape((N, 2))
     for i in range(N):
-        for j in range(N):
-            f[i][j][0] = x[i]
-            f[i][j][1] = v[j]
+        f[i][0] = 3 * math.cos(2*np.pi*scale[i])
+        f[i][1] = 3 * math.sin(2*np.pi*scale[i])
     d_f = cuda.to_device(f)
-    gridDims = ((N + TPBX - 1) // TPBX, (N + TPBY - 1) // TPBY)
-    blockDims = (TPBX, TPBY)
-    ode_kernel_c[gridDims, blockDims](d_f)
-    return d_f.copy_to_host()
+    gridDims = (N + TPB - 1) // TPB
+    blockDims = TPB
+    # Switch kernel here: c, d, e
+    function[gridDims, blockDims](d_f)
+    f = d_f.copy_to_host()
+    return f
 
 
 def main():
@@ -166,6 +169,11 @@ def main():
     # # print(f_s)
     # print("parallel", time_p)
     # # print(f_p)
+
+    # Problem 3
+    print("Problem 3")
+    print("The largest square size is 32*32. In cuda, the largest number of threads in a block is 1024 (32*32=1024).")
+    print("The error message is: numba.cuda.cudadrv.driver.CudaAPIError: [1] Call to cuLaunchKernel results in CUDA_ERROR_INVALID_VALUE")
     
 
     # # Problem 5
@@ -177,7 +185,20 @@ def main():
 
 
     # Problem 6
-    ode_solver(61)
+    print("Problem 6")
+    print("a")
+    print("It's impossible to parallel the computation over a grid of time intervals, due to the current step is depends on the previous one, the data in different grids couldn't communicate. ")
+    print("b")
+    print("Yes, there is a way to direct parallel over a grid of initial conditions. Send one pair of initial condition (x and v) to a thread. In the kernel function, do iteration with the given relation between x and v. Since the computation only depends on its own previous state, we can parallel over different ICs. ")
+    print("c")
+    print("Distance to the origin: ")
+    state_c = ode_solver(ode_kernel_e)
+    print(state_c.reshape(-1,2))
+    plt.figure(figsize=(8,8))
+    plt.plot(state_c[:,0], state_c[:,1])
+    plt.show()
+    # for item in state_c:
+    #     print(pow(item[0]**2+item[1]**2, 1/2))
 
 if __name__ == '__main__':
     main()
