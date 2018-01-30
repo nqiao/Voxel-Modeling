@@ -127,9 +127,20 @@ def ode_kernel_e(d_x, d_v):
             d_v[i] = d_v[i] + (-d_x[i] + 0.1 * (1 - d_x[i] **2 ) * d_v[i]) * DELTA_T
 
 
-def ode_solver():
-    x = np.linspace(-3, 3, 60)
-    print(x)
+def ode_solver(num_grid):
+    x = np.linspace(-3, 3, num_grid)
+    v = np.linspace(-3, 3, num_grid)
+    d_x = cuda.to_device(x)
+    d_v = cuda.to_device(v)
+    blocks = (num_grid + TPB - 1) // TPB
+    threads = TPB
+    ode_kernel_c[blocks, threads](d_x, d_v)
+    x_res = d_x.copy_to_host()
+    v_res = d_v.copy_to_host()
+    print(x_res)
+    print(v_res)
+
+
 
 
 
@@ -164,7 +175,7 @@ def main():
 
 
     # Problem 6
-    ode_solver()
+    ode_solver(61)
 
 if __name__ == '__main__':
     main()
