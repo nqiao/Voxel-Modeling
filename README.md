@@ -1,2 +1,2 @@
 # Voxel-Modeling
-Homeworks for ME599 voxel modeling
+Practice for ME599 voxel modeling
