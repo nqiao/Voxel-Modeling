@@ -6,6 +6,7 @@ from time import time
 
 TPBX = 16
 TPBY = 16
+TPB = 32
 
 # Problem 2
 def f2D(x, y):
@@ -99,19 +100,22 @@ def serial_norm(p):
 DELTA_T = 0.01
 EPOCH = 1000
 @cuda.jit
-def ode_kernel_c(d_x, d_v):
+def ode_kernel_c(d_f):
     i, j = cuda.grid(2)
-    nx, ny = d_x.shape
+    nx = d_f.shape[0]
+    ny = d_f.shape[1]
     if i < nx and j < ny:
         for e in range(EPOCH):
-            d_x[i] = d_x[i] + d_v[i] * DELTA_T
-            d_v[i] = d_v[i] - d_x[i] * DELTA_T
+            x = d_f[i][j][0]
+            v = d_f[i][j][1]
+            d_f[i][j][0] = x + v * DELTA_T
+            d_f[i][j][1] = v - x * DELTA_T
 
 @cuda.jit
 def ode_kernel_d(d_x, d_v):
-    i, j = cuda.grid(2)
-    nx, ny = d_x.shape
-    if i < nx and j < ny:
+    i = cuda.grid(1)
+    n = d_x.shape[0]
+    if i < n:
         for e in range(EPOCH):
             d_x[i] = d_x[i] + d_v[i] * DELTA_T
             d_v[i] = d_v[i] - (d_x[i] + 0.1 * d_v[i]) * DELTA_T
@@ -119,31 +123,29 @@ def ode_kernel_d(d_x, d_v):
 
 @cuda.jit
 def ode_kernel_e(d_x, d_v):
-    i, j = cuda.grid(2)
-    nx, ny = d_x.shape
-    if i < nx and j < ny:
+    i = cuda.grid(1)
+    n = d_x.shape[0]
+    if i < n:
         for e in range(EPOCH):
             d_x[i] = d_x[i] + d_v[i] * DELTA_T
             d_v[i] = d_v[i] + (-d_x[i] + 0.1 * (1 - d_x[i] **2 ) * d_v[i]) * DELTA_T
 
 
-def ode_solver(num_grid):
-    x = np.linspace(-3, 3, num_grid)
-    v = np.linspace(-3, 3, num_grid)
-    d_x = cuda.to_device(x)
-    d_v = cuda.to_device(v)
-    blocks = (num_grid + TPB - 1) // TPB
-    threads = TPB
-    ode_kernel_c[blocks, threads](d_x, d_v)
-    x_res = d_x.copy_to_host()
-    v_res = d_v.copy_to_host()
-    print(x_res)
-    print(v_res)
-
-
-
-
-
+def ode_solver(grid_size):
+    interval = 0.1
+    N = int(6 / interval) + 1                       # interval = 0.1
+    x = np.linspace(-3, 3, N)
+    v = np.linspace(-3, 3, N)
+    f = np.empty(N * N * 2).reshape((N, N, 2))
+    for i in range(N):
+        for j in range(N):
+            f[i][j][0] = x[i]
+            f[i][j][1] = v[j]
+    d_f = cuda.to_device(f)
+    gridDims = ((N + TPBX - 1) // TPBX, (N + TPBY - 1) // TPBY)
+    blockDims = (TPBX, TPBY)
+    ode_kernel_c[gridDims, blockDims](d_f)
+    return d_f.copy_to_host()
 
 
 def main():
