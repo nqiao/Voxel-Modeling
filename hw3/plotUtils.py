@@ -25,6 +25,7 @@ def arraycontourplot(fvals, xvals, yvals, levels=[-1000,0], vars=['x','y'],
     plt.show()
     return cp
 
+
 # Create 3d meshplot based on 2d array fvals 
 #   sampled on grid with coords determined by xvals and yvals
 def plot3d(fvals, xvals, yvals, titlestring='',vars=['x','y','f']):
@@ -38,6 +39,7 @@ def plot3d(fvals, xvals, yvals, titlestring='',vars=['x','y','f']):
     ax.set_xlabel(vars[0])
     ax.set_ylabel(vars[1])
     ax.set_zlabel(vars[2])
+    # plt.savefig(fname)
     plt.show()
 
 # Compute a tesselation of the zero isosurface
