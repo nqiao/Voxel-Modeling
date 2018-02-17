@@ -28,6 +28,8 @@ def plot_analysis(ori_arr, first_arr, second_arr, fig_name="no_name"):
     plt.plot([i for i in range(0,n_arr-1,2)], first_arr, 'o', label='first array')
     plt.plot([i for i in range(1,n_arr,2)], second_arr, 'o', label='second array')
     plt.legend()
+    plt.title(fig_name)
+    # plt.imshow()
     plt.savefig(fig_name + ".jpg")
 
 def synthesis(first_arr, second_arr):
@@ -393,6 +395,15 @@ def gen_f():
             f[i,j] = x_scale[i] ** 2 + y_scale[j] ** 2 - 1
     return f
 
+def actual_dist():
+    x_scale = np.linspace(-2,2,64)
+    y_scale = np.linspace(-2,2,64)
+    dist = np.empty(64*64).reshape(64,64)
+    for i in range(64):
+        for j in range(64):
+            dist[i,j] = math.sqrt(x_scale[i] ** 2 + y_scale[j] ** 2) - 1
+    return dist
+
 # Kernel function to do upwind update
 @cuda.jit
 def upwind_kernel(d_u):
@@ -431,136 +442,141 @@ def nu_upwind(f, epoch=1):
 
 
 def main():
-    # # Problem 1
-    # print("##### Problem 1 #####")
+    # Problem 1
+    print("##### Problem 1 #####")
 
-    # # 1.b
-    # print("----- 1.b -----")
-    # test_1 = np.ones(16)
-    # test_2 = np.linspace(0, 1, 16)
-    # test_3 = np.linspace(0, 1, 16) ** 2
-    # test_4 = np.random.rand(16)
-    # print("test_1: ", test_1)
-    # print()
-    # print("test_2: ", test_2)
-    # print()
-    # print("test_3: ", test_3)
-    # print()
-    # print("test_4: ", test_4)
-    # print()
+    # 1.b
+    print("----- 1.b -----")
+    test_1 = np.ones(16)
+    test_2 = np.linspace(0, 1, 16)
+    test_3 = np.linspace(0, 1, 16) ** 2
+    test_4 = np.random.rand(16)
+    print("test_1: ", test_1)
+    print()
+    print("test_2: ", test_2)
+    print()
+    print("test_3: ", test_3)
+    print()
+    print("test_4: ", test_4)
+    print()
 
-    # # 1.c
-    # print("----- 1.c -----")
-    # test_1_even, test_1_odd = analysis(test_1)
-    # plot_analysis(test_1, test_1_even, test_1_odd, fig_name='1.c.1')
-    # print("test_1 first array: ", test_1_even)
-    # print("test_1 second array: ", test_1_odd)
-    # print("Plot see figure test_1")
-    # print()
+    # 1.c
+    print("----- 1.c -----")
+    test_1_even, test_1_odd = analysis(test_1)
+    plot_analysis(test_1, test_1_even, test_1_odd, fig_name='1.c.1')
+    print("test_1 first array: ", test_1_even)
+    print("test_1 second array: ", test_1_odd)
+    print("Plot see figure test_1")
+    print()
 
-    # test_2_even, test_2_odd = analysis(test_2)
-    # plot_analysis(test_2, test_2_even, test_2_odd, fig_name='1.c.2')
-    # print("test_2 first array: ", test_2_even)
-    # print("test_2 second array: ", test_2_odd)
-    # print("Plot see figure test_2")
-    # print()
+    test_2_even, test_2_odd = analysis(test_2)
+    plot_analysis(test_2, test_2_even, test_2_odd, fig_name='1.c.2')
+    print("test_2 first array: ", test_2_even)
+    print("test_2 second array: ", test_2_odd)
+    print("Plot see figure test_2")
+    print()
 
-    # test_3_even, test_3_odd = analysis(test_3)
-    # plot_analysis(test_3, test_3_even, test_3_odd, fig_name='1.c.3')
-    # print("test_3 first array: ", test_3_even)
-    # print("test_3 second array: ", test_3_odd)
-    # print("Plot see figure test_3")
-    # print()
+    test_3_even, test_3_odd = analysis(test_3)
+    plot_analysis(test_3, test_3_even, test_3_odd, fig_name='1.c.3')
+    print("test_3 first array: ", test_3_even)
+    print("test_3 second array: ", test_3_odd)
+    print("Plot see figure test_3")
+    print()
 
-    # test_4_even, test_4_odd = analysis(test_4)
-    # plot_analysis(test_4, test_4_even, test_4_odd, fig_name='1.c.4')
-    # print("test_4 first array: ", test_4_even)
-    # print("test_4 second array: ", test_4_odd)
-    # print("Plot see figure test_4")
-    # print()
+    test_4_even, test_4_odd = analysis(test_4)
+    plot_analysis(test_4, test_4_even, test_4_odd, fig_name='1.c.4')
+    print("test_4 first array: ", test_4_even)
+    print("test_4 second array: ", test_4_odd)
+    print("Plot see figure test_4")
+    print()
 
-    # # 1.d
-    # print("----- 1.d -----")
-    # syn_1 = synthesis(test_1_even, test_1_odd)
-    # print("synthesis result 1: ", syn_1)
-    # print("difference with the original array: ", syn_1 - test_1)
-    # print()
+    # 1.d
+    print("----- 1.d -----")
+    syn_1 = synthesis(test_1_even, test_1_odd)
+    print("synthesis result 1: ", syn_1)
+    print("difference with the original array: ", syn_1 - test_1)
+    print()
 
-    # syn_2 = synthesis(test_2_even, test_2_odd)
-    # print("synthesis result 2: ", syn_2)
-    # print("difference with the original array: ", syn_2 - test_2)
-    # print()
+    syn_2 = synthesis(test_2_even, test_2_odd)
+    print("synthesis result 2: ", syn_2)
+    print("difference with the original array: ", syn_2 - test_2)
+    print()
 
-    # syn_3 = synthesis(test_3_even, test_3_odd)
-    # print("synthesis result 3: ", syn_3)
-    # print("difference with the original array: ", syn_3 - test_3)
-    # print()
+    syn_3 = synthesis(test_3_even, test_3_odd)
+    print("synthesis result 3: ", syn_3)
+    print("difference with the original array: ", syn_3 - test_3)
+    print()
 
-    # syn_4 = synthesis(test_4_even, test_4_odd)
-    # print("synthesis result 4: ", syn_4)
-    # print("difference with the original array: ", syn_4 - test_4)
-    # print()
+    syn_4 = synthesis(test_4_even, test_4_odd)
+    print("synthesis result 4: ", syn_4)
+    print("difference with the original array: ", syn_4 - test_4)
+    print()
 
-    # # 1.e
-    # print("----- 1.e -----")
-    # zero_array = np.zeros(8)
-    # syn_1_0 = synthesis(test_1_even, zero_array)
-    # print("synthesis result 1: ", syn_1_0)
-    # print("difference with the original array: ", syn_1_0 - test_1)
-    # print()
+    # 1.e
+    print("----- 1.e -----")
+    zero_array = np.zeros(8)
+    syn_1_0 = synthesis(test_1_even, zero_array)
+    print("synthesis result 1: ", syn_1_0)
+    print("difference with the original array: ", syn_1_0 - test_1)
+    print()
 
-    # syn_2_0 = synthesis(test_2_even, zero_array)
-    # print("synthesis result 2: ", syn_2_0)
-    # print("difference with the original array: ", syn_2_0 - test_2)
-    # print()
+    syn_2_0 = synthesis(test_2_even, zero_array)
+    print("synthesis result 2: ", syn_2_0)
+    print("difference with the original array: ", syn_2_0 - test_2)
+    print()
 
-    # syn_3_0 = synthesis(test_3_even, zero_array)
-    # print("synthesis result 3: ", syn_3_0)
-    # print("difference with the original array: ", syn_3_0 - test_3)
-    # print()
+    syn_3_0 = synthesis(test_3_even, zero_array)
+    print("synthesis result 3: ", syn_3_0)
+    print("difference with the original array: ", syn_3_0 - test_3)
+    print()
 
-    # syn_4_0 = synthesis(test_4_even, zero_array)
-    # print("synthesis result 4: ", syn_4_0)
-    # print("difference with the original array: ", syn_4_0 - test_4)
-    # print()
-
-
-    # # Problem 2
-    # print("##### Problem 2 #####")
-    # # epoch=100
-    # excute_2a(100) 
-    # # epoch=100
-    # excute_2b(100)
-    # excute_2cde('c')
-    # excute_2cde('d')
-    # excute_2cde('e')
-    # print("I set the threshold to 1e-5 and 1e-7. ")
-    # print("threshold        1e-5             1e-7")
-    # print("RAD = 1           389              591")
-    # print("RAD = 2           630              1001")
-    # print("The conclusion of this experiment is it converges faster when rad=1 than rad=2.")
-    # print("Notes: RAD=2, a fraction coefficient w is needed to make sure the results dont blow up.")
-    # print("       Here w = 0.5.")
+    syn_4_0 = synthesis(test_4_even, zero_array)
+    print("synthesis result 4: ", syn_4_0)
+    print("difference with the original array: ", syn_4_0 - test_4)
+    print()
 
 
-    # # Problem 3
-    # # 3.a
-    # print("##### Problem 3 #####")
-    # print("----- 3.a -----")
-    # print("3D plot and contourplot see pop out windows.")
-    # print("Disscussion: ")
-    # excute_3a()
-    # print()
-    # # 3.b
-    # print("----- 3.b -----")
-    # print("3D plot see pop out window.")
-    # time_3b = excute_3b()
-    # print()
-    # # 3.c
-    # print("----- 3.c -----")
-    # print("3D plot see pop out window.")
-    # excute_3c()
-    # print()
+    # Problem 2
+    print("##### Problem 2 #####")
+    # epoch=100
+    excute_2a(100) 
+    # epoch=100
+    excute_2b(100)
+    excute_2cde('c')
+    excute_2cde('d')
+    excute_2cde('e')
+    print("I set the threshold to 1e-5 and 1e-7. ")
+    print("threshold        1e-5             1e-7")
+    print("RAD = 1           389              591")
+    print("RAD = 2           630              1001")
+    print("The conclusion of this experiment is it converges faster when rad=1 than rad=2.")
+    print("Notes: RAD=2, a fraction coefficient w is needed to make sure the results dont blow up.")
+    print("       Here w = 0.5.")
+
+
+    # Problem 3
+    # 3.a
+    print("##### Problem 3 #####")
+    print("----- 3.a -----")
+    print("3D plot and contourplot see pop out windows.")
+    print("Discussion: Two plots look sensible to me. There are three cones located at the fixed points, because the points close to these fixed")
+    print("have shorter distance. Both the 3D plot and the contour plot coincide with this intuition. ")
+    excute_3a()
+    print()
+    # 3.b
+    print("----- 3.b -----")
+    print("3D plot see pop out window.")
+    print("Dicussion: according to the 3D plot of the norm of the gradient, small gradient values appear near those three fixed points ")
+    print("and alone three perpendicular bisectors; the gradient values in the rest places are quite even. Minimum distance appears")
+    print("near the three fixed points and maximum distance appears alone the perpendicular bisectors, so the gradient in these palces")
+    print("are relatively small.")
+    excute_3b()
+    print()
+    # 3.c
+    print("----- 3.c -----")
+    print("3D plot see pop out window.")
+    excute_3c()
+    print()
 
     # Problem 4
     # 4.a
@@ -579,6 +595,8 @@ def main():
     plot3d(f_10, x_scale, y_scale, titlestring='4.c: after 10 iterations',vars=['x','y','f'])
     f_20 = nu_upwind(f_0, 20)
     plot3d(f_20, x_scale, y_scale, titlestring='4.c: after 20 iterations',vars=['x','y','f'])
+    print("Discussion: the first 10 iterations update the nearest 10 grids starting from radius 1. The updated part looks like a straight line.")
+    print("The after 10 iterations update 10 more grids outward.")
     print()
 
     print("----- 4.d -----")
@@ -587,16 +605,24 @@ def main():
     plot3d(f_28, x_scale, y_scale, titlestring='4.d: after 28 iterations',vars=['x','y','f'])
     f_36 = nu_upwind(-f_20, 16)
     plot3d(f_28, x_scale, y_scale, titlestring='4.d: after 36 iterations',vars=['x','y','f'])
+    print("Discussion: after changing the sign, it updates the points which are negative previously. The updated part looks like a straight line.")
     print()
 
     print("----- 4.e -----")
-    print("Flip the sign again, plot the result after another 100 iterations which is 136 iterations totally.")
-    print("Plot the results after 136 iterations directly from the original unit disk and compare.")
-    f_136 = nu_upwind(-f_36, 100)
-    plot3d(f_136, x_scale, y_scale, titlestring='4.e: after 136 iterations',vars=['x','y','f'])
-    # 136 iterations directly from f_0 with no sign changed.
-    f_136_dir = nu_upwind(f_0, 136)
-    plot3d(f_136_dir, x_scale, y_scale, titlestring='4.e: with no sign changes, after 136 iterations',vars=['x','y','f'])
+    print("Flip the sign again, plot the final result. ")
+    print("Plot the actual signed distance function for the unit disk. ")
+    print("Plot the difference between the final result and the actual distance.")
+    print("Discussion: the differnence is quite small in the center area and it goes up outwards. The largest difference appears in corners.")
+    
+    f_final = nu_upwind(-f_36, 1)
+    plot3d(f_final, x_scale, y_scale, titlestring='4.e: Flip the sign, final results',vars=['x','y','f'])
+
+    act_dist = actual_dist()
+    plot3d(act_dist, x_scale, y_scale, titlestring='4.e: actual signed distance function for the unit disk',vars=['x','y','actual distance'])
+
+    diff = f_final - act_dist
+    plot3d(diff, x_scale, y_scale, titlestring='4.e: difference between the final result and the actual distance',vars=['x','y','difference'])
+
     print()
 
 if __name__ == "__main__":
